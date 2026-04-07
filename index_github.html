@@ -61,9 +61,16 @@ body{display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);min
 .cmr-row span:first-child{color:#888;font-weight:600;}.cmr-row span:last-child{font-weight:700;text-align:right;max-width:60%;}
 .cmr-barcode{text-align:center;margin:10px 0;}.cmr-barcode svg{max-width:100%;}
 #printFrame{position:absolute;left:-9999px;top:-9999px;width:0;height:0;border:none;}
+#printArea{display:none;}
 @media print{
-  html,body{display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;}
-  *{display:none!important;}
+  html,body{height:auto!important;overflow:visible!important;background:#fff!important;margin:0!important;padding:0!important;display:block!important;min-height:0!important;}
+  body>*{display:none!important;}
+  #printArea{display:block!important;}
+  #printArea .cmr-wrap{width:190mm;height:277mm;margin:0 auto;position:relative;overflow:hidden;page-break-after:always;background-size:100% 100%;background-repeat:no-repeat;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  #printArea .cmr-wrap:last-child{page-break-after:auto;}
+  #printArea .cmr-wrap .f{position:absolute;font-family:Arial,sans-serif;font-size:9pt;font-weight:700;color:#000;white-space:pre-line;line-height:1.3;}
+  #printArea .cmr-wrap .barcode-vrid{position:absolute;top:2.2%;right:3%;display:flex;flex-direction:column;align-items:center;}
+  @page{size:A4 portrait;margin:0;}
 }
 </style>
 </head>
@@ -75,6 +82,7 @@ body{display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);min
 <div class="page active" id="pageMenu"></div>
 <div class="page" id="pageFlow"></div>
 <iframe id="printFrame"></iframe>
+<div id="printArea"></div>
 <!--BOLLA_IMG_PLACEHOLDER-->
 
 <script>/* JsBarcode inline */
@@ -169,29 +177,14 @@ function printCMR(){
   for(var i=0;i<3;i++) printDoc+=cmr;
   printDoc+='</body></html>';
 
-  /* Stampa iPad — sostituisci il body con le bolle, stampa, poi ripristina */
-  var originalBody=document.body.innerHTML;
-  var originalStyle=document.body.getAttribute('style')||'';
-  var printContent='<style>*{margin:0;padding:0;box-sizing:border-box;}body{margin:0!important;padding:0!important;background:#fff!important;display:block!important;height:auto!important;overflow:visible!important;min-height:0!important;}';
-  printContent+='.cmr-wrap{width:190mm;height:277mm;margin:0 auto;position:relative;overflow:hidden;page-break-after:always;background-size:100% 100%;background-repeat:no-repeat;-webkit-print-color-adjust:exact;print-color-adjust:exact;}';
-  printContent+='.cmr-wrap:last-child{page-break-after:auto;}';
-  printContent+='.cmr-wrap .f{position:absolute;font-family:Arial,sans-serif;font-size:9pt;font-weight:700;color:#000;white-space:pre-line;line-height:1.3;}';
-  printContent+='.cmr-wrap .barcode-vrid{position:absolute;top:2.2%;right:3%;display:flex;flex-direction:column;align-items:center;}';
-  printContent+='@page{size:A4 portrait;margin:0;}</style>';
-  for(var i=0;i<3;i++) printContent+=cmr;
+  /* Metti le 3 bolle nel div nascosto printArea */
+  var pa=document.getElementById('printArea');
+  var content='';
+  for(var i=0;i<3;i++) content+=cmr;
+  pa.innerHTML=content;
 
-  document.body.innerHTML=printContent;
-  document.body.setAttribute('style','margin:0;padding:0;background:#fff;display:block;height:auto;overflow:visible;min-height:0;');
-
-  setTimeout(function(){
-    window.print();
-    /* Ripristina dopo la stampa */
-    setTimeout(function(){
-      document.body.innerHTML=originalBody;
-      document.body.setAttribute('style',originalStyle);
-      buildMenu();
-    },1000);
-  },500);
+  /* Stampa — il CSS @media print nasconde tutto tranne #printArea */
+  setTimeout(function(){ window.print(); },300);
 }
 
 buildMenu();
